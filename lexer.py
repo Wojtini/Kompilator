@@ -16,7 +16,7 @@ tokens = (
 )
 
 t_ignore = ' \t'
-t_ignore_COMMENT = '\([A-Za-z0-9 \\\n]*\)'
+t_ignore_COMMENT = '\([A-Za-z0-9\;\[\] \\\n]*\)'
 
 t_VAR = r'VAR'
 t_BEGIN = r'BEGIN'

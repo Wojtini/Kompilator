@@ -3,31 +3,56 @@ from ply import lex, yacc
 import lexer
 import parser
 
-# data = '''
-# VAR
-#     n, p, tab[20:40]
-# BEGIN
-#     READ n;
-#     IF n GEQ 0 THEN
-#         REPEAT
-#             p ASSIGN n DIV 2;
-#             p ASSIGN 2 TIMES p;
-#             IF n NEQ p THEN
-#                 WRITE 1;
-#             ELSE
-#                 WRITE 0;
-#             ENDIF
-#             n ASSIGN n DIV 2;
-#         UNTIL n EQ 0;
-#     ENDIF
-# END
-# '''
-
+# 9    a
+# 10    b
+# 11    c
+# 12  tab 1
+# 13  tab 2
+# 14  tab 3
+# 15  tab 4
+# 16  tab 5
+data2 = '''
+VAR
+    a,b,c, tab[601:605]
+BEGIN
+    a ASSIGN 603;
+    READ tab[a];
+    WRITE tab[a];
+    WRITE tab[603];
+END
+'''
+data1 = '''
+VAR
+    a,b,c,d, tab[1:5]
+BEGIN
+    READ a;
+    READ tab[a];
+    WRITE a;
+    WRITE tab[1];
+    WRITE tab[a];
+END
+'''
 data = '''
 VAR
-    n
+    a,b,c,d, tab[1:5]
 BEGIN
-    READ n;
+    a ASSIGN 1;
+    WRITE a;
+
+    tab[1] ASSIGN 2;
+    WRITE tab[1];
+
+    b ASSIGN 2;
+    tab[b] ASSIGN 3;
+    WRITE tab[b];
+
+    c ASSIGN 4;
+    tab[3] ASSIGN c;
+    WRITE tab[3];
+
+    d ASSIGN 5;
+    tab[d] ASSIGN d;
+    WRITE tab[d];
 END
 '''
 

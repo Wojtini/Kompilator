@@ -23,13 +23,14 @@ class DeclarationVar:
         return self.isarr == True
 
     def __repr__(self):
-        return str((self.pidentifier, self.memoryId, self.length, f"IsArray: {self.isArray()}"))
+        return str((self.pidentifier, self.memoryId, self.length, f"IsArray: {self.isArray()}, MemID: {self.memoryId}, initialized: {self.initialized}"))
 
 class DeclarationArray(DeclarationVar):
     def __init__(self, pidentifier, rangeFrom, rangeTo, line):
         super(DeclarationArray, self).__init__(pidentifier, True, lineNumber=line)
-        if rangeFrom > rangeTo:
+        # print(f"{rangeFrom}, {rangeTo}")
+        if int(rangeFrom) > int(rangeTo):
             raise Exception(f"Bad array range in declaration of {pidentifier}[{rangeFrom},{rangeTo}] in line {line}")
-        self.rangeFrom = rangeFrom
-        self.rangeTo = rangeTo
-        self.length = rangeTo - rangeFrom + 1
+        self.rangeFrom = int(rangeFrom)
+        self.rangeTo = int(rangeTo)
+        self.length = self.rangeTo - self.rangeFrom + 1

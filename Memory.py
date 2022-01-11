@@ -1,15 +1,11 @@
-class MemoryException(Exception):
-    pass
-
-
 class MemoryManager:
     def __init__(self):
         self.declarations = None
         self.declaredPidentifiers = set()
         self.memmap = {}
-        self.lastblockid = 0
+        self.lastblockid = 9
 
-    def runMemCheck(self, declarations):
+    def checkMemory(self, declarations):
         self.declarations = declarations
         self.checkDuplicateDeclarations()
 
@@ -19,19 +15,17 @@ class MemoryManager:
             if pidentifier in self.declaredPidentifiers:
                 raise Exception("Duplicate declaration for '%s' at line %i" % (pidentifier, decl.lineNumber))
             self.declaredPidentifiers.add(pidentifier)
-
-    def listDeclarationsMemory(self):
-        print("DECLARATIONS:")
-        print(self.declaredPidentifiers)
-        print("MEMORY:")
-        print(self.memmap)
     
-    def unregister(self, declaration):
-        try:
-            del self.memmap[declaration.pidentifier]
-            declaration.memoryId = None
-        except KeyError as key:
-            raise Exception("Trying to unregister not declared identifier %s" % key)
+    # def unregister(self, declaration):
+    #     try:
+    #         del self.memmap[declaration.pidentifier]
+    #         declaration.memoryId = None
+    #     except KeyError as key:
+    #         raise Exception("Trying to unregister not declared identifier %s" % key)
+
+    def assignMemToVariables(self):
+        for declaration in self.declarations:
+            self.assignMem(declaration)
 
     def assignMem(self, declaration):
         pidentifier = declaration.pidentifier
@@ -50,14 +44,10 @@ class MemoryManager:
 
         self.lastblockid += blockLength
 
-    def assignMemToDeclarations(self):
-        for declaration in self.declarations:
-            self.assignMem(declaration)
-
-    def getUnnamedMemBlock(self):
-        assignedMem = self.lastblockid
-        self.lastblockid += 1
-        return assignedMem
+    # def getUnnamedMemBlock(self):
+    #     assignedMem = self.lastblockid
+    #     self.lastblockid += 1
+    #     return assignedMem
 
     def getSymbols(self):
         return self.memmap.keys()
@@ -71,7 +61,7 @@ class MemoryManager:
         except KeyError:
             raise Exception("Identifier '%s' is not declared in current context" % name)
 
-    def getDeclarationByPidentifier(self, pid):
+    def getVariableByPidentifier(self, pid):
         if pid not in self.memmap:
             raise Exception("Identifier '%s' is not declared in current context" % pid)
 

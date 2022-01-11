@@ -9,7 +9,7 @@
 Narzędzia:
 ----------------------------------------
 bison (GNU Bison) 3.5.1
-flex 2.6.4
+flex 2.6.4 JEST
 GNU Make 4.2.1
 g++ 9.3.0
 
