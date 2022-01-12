@@ -1,5 +1,6 @@
 from register import REG
 from misc.identifier import ArrayAccess
+from misc.jumps import *
 # pobrana liczbe zapisuje w rejestrze r_a oraz k <- k + 1
 def GET(p):
     p.makeInstr('GET')
@@ -37,17 +38,17 @@ def INC(p, regX):
 def DEC(p,x):
     raise Exception("not implemented")
 
-def JUMP(p,x):
-    raise Exception("not implemented")
+def JUMP(p,j):
+    raise Exception("Are you sure u want to use this")
 
 def JPOS(p,x):
-    raise Exception("not implemented")
+    raise Exception("Are you sure u want to use this")
 
-def JZERO(p,x):
-    raise Exception("not implemented")
+def JZERO(p,j):
+    raise Exception("Are you sure u want to use this")
 
 def JNEG(p,x):
-    raise Exception("not implemented")
+    raise Exception("Are you sure u want to use this")
 
 ################
 ### COMMANDS ###
@@ -66,7 +67,7 @@ def WRITE(p, val):
     SWAP(p,REG.B) #dajemy do A zeby wyprintowac
     PUT(p)
     # PRINT_ALL_REG(p) 
-
+# DZIALA
 def ASSIGN(p, identifier, expression):
     decl = identifier.declaration
     if decl.islocal:
@@ -83,7 +84,161 @@ def ASSIGN(p, identifier, expression):
     SWAP(p, REG.C)
 
     STORE(p, REG.B)
+
+##################
+### ARYTMETYKA ###
+##################
+
+# DZIALA
+def PLUS(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
+    if destReg == helpReg:
+        raise Exception("Cannot use same registers")
+    leftValue.evalToRegInstr(p, destReg)
+    rightValue.evalToRegInstr(p, helpReg)
+    SWAP(p, destReg)
+    ADD(p, helpReg)
+    SWAP(p, destReg)
+
+# DZIALA
+def MINUS(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
+    if destReg == helpReg:
+        raise Exception("Cannot use same registers")
+    leftValue.evalToRegInstr(p, destReg)
+    rightValue.evalToRegInstr(p, helpReg)
+    SWAP(p, destReg)
+    SUB(p, helpReg)
+    SWAP(p, destReg)
+
+# NIE DZIALA MOZLIWOSC OPTYMALIZACJI
+def TIMES(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
+    raise Exception("TIMES NOT IMPLEMENTED YET")
+    if destReg == helpReg:
+        raise Exception("Cannot use same registers")
+    leftValue.evalToRegInstr(p, destReg)
+    rightValue.evalToRegInstr(p, helpReg)
+def DIV(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
+    raise Exception("DIV NOT IMPLEMENTED YET")
+def MOD(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
+    raise Exception("MOD NOT IMPLEMENTED YET")
+
+###############
+### WARUNKI ###
+###############
+
+# DZIALA zmienne + number
+def IF_THEN(p, cond, thenCommands):
+    cond.generateCode(p)
+    futureJZERO = FutureJZERO(p) #Przeskakuje jumpa (dom. 2)
+    futureJUMP = FutureJUMP(p) #Przeskakuje do ENDIF
+
+    thenId = p.getCounter()
+    for command in thenCommands:
+        command.generateCode(p)
+    endId = p.getCounter()
+
+    futureJZERO.finish(thenId)
+    futureJUMP.finish(endId)
+
+def IF_THEN_ELSE(p, cond, thenCommands, elseCommands):
+    cond.generateCode(p)
+    jumpIfTrue = FutureJZERO(p)
+    jumpIfFalse = FutureJUMP(p)
+
+    thenId = p.getCounter()
+
+    for command in thenCommands:
+        command.generateCode(p)
+
+    skipElseIfTrue = FutureJUMP(p)
+
+    elseId = p.getCounter()
+
+    for command in elseCommands:
+        command.generateCode(p)
+
+    endId = p.getCounter()
+
+    jumpIfTrue.finish(thenId)
+    jumpIfFalse.finish(elseId)
+    skipElseIfTrue.finish(endId)
+
+##################
+### CONDITIONS ###
+##################
+
+def CONDITION_EQ(p, leftVal, rightVal):
+    leftVal.evalToRegInstr(p, REG.B)  
+    rightVal.evalToRegInstr(p, REG.C)   
+    SWAP(p, REG.B)
+    SUB(p, REG.C)
+    # 0 if true
+    # everything else if false
+
+def CONDITION_NEQ(p, leftVal, rightVal):
+    CONDITION_EQ(p, leftVal, rightVal)
+
+    yesZeroJump = FutureJZERO(p) #Jesli zero w rejestrze
     
+    #Jesli nie zero
+    RESET(p, REG.A)
+    skipJump = FutureJUMP(p)
+
+    yesZeroJumpId = p.getCounter()
+    #jesli zero
+    INC(p, REG.A)
+
+    skipJumpId = p.getCounter()
+    skipJump.finish(skipJumpId)
+    yesZeroJump.finish(yesZeroJumpId)
+
+# Uproscic Jumpy...
+def CONDITION_GE(p, leftVal, rightVal):
+    leftVal.evalToRegInstr(p, REG.B) #wieksza 
+    rightVal.evalToRegInstr(p, REG.C)
+
+    SWAP(p, REG.B)
+    SUB(p, REG.C)
+
+    jumpZero = FutureJZERO(p)   # jesli zero 
+    jumpNeg = FutureJNEG(p)     # jesli ujemne
+
+    # jesli REG.A = REG.B - REG.C > 0
+    RESET(p, REG.A)         # ustaw na zero
+    jumpEnd = FutureJUMP(p) # i tyle
+
+
+    # jesli REG.A = 0
+    jumpZero.finish(p.getCounter())
+    INC(p, REG.A)
+
+    # jesli REG.A < 0
+    # nic nie rob
+    jumpEnd.finish(p.getCounter())
+    jumpNeg.finish(p.getCounter())
+
+def CONDITION_GEQ(p, leftVal, rightVal):
+    leftVal.evalToRegInstr(p, REG.B) #wieksza 
+    rightVal.evalToRegInstr(p, REG.C)
+
+    SWAP(p, REG.B)
+    SUB(p, REG.C)
+
+    jumpPos = FutureJNEG(p)
+
+    # jesli REG.A = REG.B - REG.C > 0
+    RESET(p, REG.A)
+
+    jnegID = p.getCounter()
+    jumpPos.finish(jnegID)
+
+    # jesli REG.A < 0
+    # nic nie rob
+
+def CONDITION_LE(p, leftVal, rightVal):
+    CONDITION_GE(p, rightVal, leftVal)
+
+def CONDITION_LEQ(p, leftVal, rightVal):
+    CONDITION_GEQ(p, rightVal, leftVal)
 
 ###############
 ### HELPERS ###
@@ -120,7 +275,7 @@ def LOAD_IDENTIFIER_VALUE_TO_REGISTER(p, identifier, reg):
 
     SWAP(p, reg)
 
-
+# Laduje wartosc zmiennej w tablicy do wybranego rejestru
 def LOAD_ARRAY_VALUE_TO_REGISTER(p, identifier, reg):
     identifier.memAddressToReg(p, reg, REG.G)
     LOAD(p, reg)

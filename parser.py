@@ -148,7 +148,7 @@ def p_expression_all(p):
     | value DIV value
     | value MOD value
     '''
-    p[0] = BinaryOperator(p[1],p[2],p[3])
+    p[0] = expression.BinaryOperator(p[1],p[2],p[3])
     
 #################
 ### CONDITION ###
@@ -162,7 +162,7 @@ def p_condition(p):
                 | value LEQ value
                 | value GEQ value
     '''
-    p[0] = Condition(p[1],p[2],p[3])
+    p[0] = conditions.Condition(p[1],p[2],p[3])
 
 ##############
 ### VALUES ###

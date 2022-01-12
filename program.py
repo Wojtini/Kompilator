@@ -32,6 +32,11 @@ class Program:
     def incCounter(self):
         self.counter += 1
 
+    def addFutureInstr(self, future):
+        self.incCounter()
+        self.instructions.append(future)
+        return self.counter - 1
+
     def translateCommands(self):
         self.makeInstr("RESET a")
         self.makeInstr("RESET b")
@@ -48,6 +53,11 @@ class Program:
             self.makeInstr("")
 
     def commandsToText(self):
+        text = ""
+        for instr,index in enumerate(self.instructions):
+            text += f"{index}: {instr}\n"
+        
         text = '\n'.join(self.instructions)
         text += "\nHALT"
+        
         return text

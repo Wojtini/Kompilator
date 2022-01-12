@@ -1,0 +1,32 @@
+ZROBIONE:
+    [PODSTAWA]
+    ASSIGN
+    READ
+    WRITE
+
+    [WARUNKI]
+    IF THEN
+    IF THEN ELSE
+        EQ
+        NEQ
+        LE
+        GE
+        LEQ
+        GEQ
+    
+    [PETLE]
+
+#############
+###[TO DO]###
+#############
+
+OPOZNIONE:
+    TIMES
+    DIV
+    MOD
+
+PLAN DZIALANIA
+    REPEAT UNTIL
+    WHILE DO ENDWHILE
+    FOR FROM TO DO ENDFOR
+    FOR FROM DOWNTO DO ENDFOR

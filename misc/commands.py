@@ -31,13 +31,17 @@ class CommandIfThenElse(Command):
         self.thenCommands = thenCommands
         self.elseCommands = elseCommands
         pass
+    def generateCode(self, p):
+        instructions.IF_THEN_ELSE(p, self.condition, self.thenCommands, self.elseCommands)
 
 class CommandIfThen(Command):
     def __init__(self, line_number, condition, thenCommands):
         super().__init__(line_number=line_number)
         self.condition = condition
         self.thenCommands = thenCommands
-        pass
+    
+    def generateCode(self, p):
+        instructions.IF_THEN(p, self.condition, self.thenCommands)
 
 class CommandWhileDo(Command):
     def __init__(self, line_number):

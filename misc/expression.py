@@ -39,14 +39,14 @@ class BinaryOperator(Expression):
 
     def evalToRegInstr(self, p, reg):
         if self.operator == 'PLUS':
-            return Instructions.PLUS(p, self.left, self.right, reg)
-        if self.operator == 'MINUS':
-            return Instructions.MINUS(p, self.left, self.right, reg)
-        if self.operator == 'TIMES':
-            return Instructions.TIMES(p, self.left, self.right, reg)
-        if self.operator == 'DIV':
-            return Instructions.DIVIDE(p, self.left, self.right, reg)
-        if self.operator == 'MOD':
-            return Instructions.MODULO(p, self.left, self.right, reg)
+            return instructions.PLUS(p, self.left, self.right, reg)
+        elif self.operator == 'MINUS':
+            return instructions.MINUS(p, self.left, self.right, reg)
+        elif self.operator == 'TIMES':
+            return instructions.TIMES(p, self.left, self.right, reg)
+        elif self.operator == 'DIV':
+            return instructions.DIVIDE(p, self.left, self.right, reg)
+        elif self.operator == 'MOD':
+            return instructions.MODULO(p, self.left, self.right, reg)
         else:
             raise Exception("Operator '%s' not defined" % self.operator)

@@ -11,6 +11,20 @@ import parser
 # 14  tab 3
 # 15  tab 4
 # 16  tab 5
+data = '''
+VAR
+    a,b,c, tab[601:605]
+BEGIN
+    a ASSIGN 2;
+    b ASSIGN 2;
+    IF a LEQ b THEN
+        a ASSIGN 1;
+    ELSE
+        a ASSIGN 0;
+    ENDIF
+    WRITE a;
+END
+'''
 data2 = '''
 VAR
     a,b,c, tab[601:605]
@@ -32,7 +46,7 @@ BEGIN
     WRITE tab[a];
 END
 '''
-data = '''
+data3 = '''
 VAR
     a,b,c,d, tab[1:5]
 BEGIN
