@@ -111,7 +111,7 @@ def MINUS(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
     SWAP(p, destReg)
 
 # DZIALA MOZLIWOSC OPTYMALIZACJI (Iteracyjnie)
-def TIMES(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E):
+def TIMES_WORSE(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E):
     # C, D, E
     # print(f"{destReg}, {leftReg}, {rightReg}")
     if destReg == leftReg or leftReg==rightReg or rightReg==destReg:
@@ -176,7 +176,86 @@ def TIMES(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E
     jumpEndingAll1.finish(p.getCounter()) #Po wykonaniu x mnozen mamy zero //wyczerpanie zasobu rightReg
 
     # PRINT_ALL_REG(p)
-    
+
+def TIMES(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E):
+    # C, D, E
+    # print(f"{destReg}, {leftReg}, {rightReg}")
+    if destReg == leftReg or leftReg==rightReg or rightReg==destReg:
+        raise Exception("Cannot use same registers")
+    RESET(p, destReg)
+    # ustaw wieksza wartosc do leftReg a mniejsza do rightReg
+    BIGGER_TO_LEFT_SMALLER_TO_RIGHT(p, leftValue, rightValue, destReg, leftReg, rightReg)
+
+    #
+    # sprawdzamy czy rightReg jest ujemne
+    #
+    RESET(p, REG.A)
+    ADD(p, rightReg)
+    jumpIfNeedToChangeSign = FutureJNEG(p) # mnozymy przez ujemne
+    jumpEndingAll = FutureJZERO(p) # jesli mnozymy przez zero
+    skipAbovePart = FutureJUMP(p)
+
+    # jesli tak to odwracamy leftReg
+    jumpIfNeedToChangeSign.finish(p.getCounter())
+    SWAP(p, rightReg) # zwracamy pozyczona wartosc rightReg
+    RESET(p, REG.A) # REG.A = 0
+    SUB(p, leftReg) # REG.A = - leftReg
+    SWAP(p, leftReg) # leftReg = REG.A = -leftReg
+
+    RESET(p, REG.A)
+    SUB(p, rightReg)
+    SWAP(p, rightReg) # odwracamy "zasob"
+
+    # jesli nie to skip
+    skipAbovePart.finish(p.getCounter())
+
+    #
+    # Glowna petla
+    #
+    # PRINT_ALL_REG(p)
+    mainLoopId = p.getCounter()
+
+    RESET(p, REG.A)
+    ADD(p, rightReg) # ustaw REG.A na rightReg
+    jumpEndingAll1 = FutureJZERO(p)
+    DEC(p, REG.H)
+    DEC(p, REG.H)
+    SHIFT(p, REG.H) # podziel na 2
+    INC(p, REG.H)
+    INC(p, REG.H)
+    SHIFT(p, REG.H) # pomnoz na 2
+    SUB(p, rightReg) # jesli zero to parzyste, jesli -1 to nieparzyste
+    parzysteJZERO = FutureJZERO(p)
+    # nieparzysteJUMP = FutureJUMP(p)
+    SWAP(p, destReg)
+    ADD(p, leftReg)
+    SWAP(p, destReg)
+
+    parzysteJZERO.finish(p.getCounter())
+    #shiftujemy leftReg w lewo
+    SWAP(p, leftReg)
+    SHIFT(p, REG.H)
+    SWAP(p, leftReg)
+
+    #shiftujemy rightReg w prawo
+    DEC(p, REG.H)
+    DEC(p, REG.H)
+
+    SWAP(p, rightReg)
+    SHIFT(p, REG.H)
+    SWAP(p, rightReg)
+
+    INC(p, REG.H)
+    INC(p, REG.H)
+
+    FutureJUMP(p).finish(mainLoopId)
+    #
+    # Koniec mnozenia
+    # ze wzgledu na:
+    #
+    jumpEndingAll.finish(p.getCounter()) #Mnozymy przez zero
+    jumpEndingAll1.finish(p.getCounter()) #Po wykonaniu x mnozen mamy zero //wyczerpanie zasobu rightReg
+
 # times helper
 def BIGGER_TO_LEFT_SMALLER_TO_RIGHT(p, leftValue, rightValue, destReg, leftReg, rightReg):
     leftValue.evalToRegInstr(p, leftReg)
@@ -200,7 +279,6 @@ def BIGGER_TO_LEFT_SMALLER_TO_RIGHT(p, leftValue, rightValue, destReg, leftReg, 
 
     # koniec swapa
     jumpEnd.finish(p.getCounter())
-
 
 def DIV(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, helpReg=REG.F):
     if destReg == leftReg or leftReg==rightReg or rightReg==destReg or helpReg==destReg or helpReg==leftReg or helpReg==rightReg:

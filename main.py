@@ -15,14 +15,8 @@ data = '''
 VAR
     a,b,c,d, tab[1:5]
 BEGIN
-    a ASSIGN -1 DIV 2;
-    b ASSIGN 1 DIV 2;
-    c ASSIGN -1 DIV -2;
-    d ASSIGN 1 DIV -2;
+    a ASSIGN 123456789 TIMES 100100430;
     WRITE a;
-    WRITE b;
-    WRITE c;
-    WRITE d;
 END
 '''
 data2 = '''
