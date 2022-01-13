@@ -277,6 +277,7 @@ def DIV(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     RESET(p, REG.A)
     SUB(p, destReg)
     SWAP(p, destReg)
+    DEC(p, destReg)
 
     trueEnd.finish(p.getCounter())
 

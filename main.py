@@ -13,11 +13,16 @@ import parser
 # 16  tab 5
 data = '''
 VAR
-    a,b,c, tab[601:605]
+    a,b,c,d, tab[1:5]
 BEGIN
-    b ASSIGN 5;
-    a ASSIGN b MOD -2;
+    a ASSIGN -1 DIV 2;
+    b ASSIGN 1 DIV 2;
+    c ASSIGN -1 DIV -2;
+    d ASSIGN 1 DIV -2;
     WRITE a;
+    WRITE b;
+    WRITE c;
+    WRITE d;
 END
 '''
 data2 = '''
