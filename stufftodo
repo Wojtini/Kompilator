@@ -20,11 +20,6 @@ ZROBIONE:
 ###[TO DO]###
 #############
 
-OPOZNIONE:
-    TIMES
-    DIV
-    MOD
-
 PLAN DZIALANIA
     REPEAT UNTIL
     WHILE DO ENDWHILE

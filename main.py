@@ -15,13 +15,8 @@ data = '''
 VAR
     a,b,c, tab[601:605]
 BEGIN
-    a ASSIGN 2;
-    b ASSIGN 2;
-    IF a LEQ b THEN
-        a ASSIGN 1;
-    ELSE
-        a ASSIGN 0;
-    ENDIF
+    b ASSIGN 5;
+    a ASSIGN b MOD -2;
     WRITE a;
 END
 '''

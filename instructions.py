@@ -35,8 +35,8 @@ def RESET(p, regX):
 def INC(p, regX):
     p.makeInstr(f'INC {regX}')
 
-def DEC(p,x):
-    raise Exception("not implemented")
+def DEC(p,regX):
+    p.makeInstr(f'DEC {regX}')
 
 def JUMP(p,j):
     raise Exception("Are you sure u want to use this")
@@ -89,6 +89,7 @@ def ASSIGN(p, identifier, expression):
 ### ARYTMETYKA ###
 ##################
 
+    TIMES
 # DZIALA
 def PLUS(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
     if destReg == helpReg:
@@ -109,20 +110,249 @@ def MINUS(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
     SUB(p, helpReg)
     SWAP(p, destReg)
 
-# NIE DZIALA MOZLIWOSC OPTYMALIZACJI
-def TIMES(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
-    raise Exception("TIMES NOT IMPLEMENTED YET")
-    if destReg == helpReg:
+# DZIALA MOZLIWOSC OPTYMALIZACJI (Iteracyjnie)
+def TIMES(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E):
+    # C, D, E
+    # print(f"{destReg}, {leftReg}, {rightReg}")
+    if destReg == leftReg or leftReg==rightReg or rightReg==destReg:
         raise Exception("Cannot use same registers")
-    leftValue.evalToRegInstr(p, destReg)
-    rightValue.evalToRegInstr(p, helpReg)
-def DIV(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
-    raise Exception("DIV NOT IMPLEMENTED YET")
-def MOD(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
-    raise Exception("MOD NOT IMPLEMENTED YET")
+    RESET(p, destReg)
+    # ustaw wieksza wartosc do leftReg a mniejsza do rightReg
+    BIGGER_TO_LEFT_SMALLER_TO_RIGHT(p, leftValue, rightValue, destReg, leftReg, rightReg)
+
+    #
+    # sprawdzamy czy rightReg jest ujemne
+    #
+    RESET(p, REG.A)
+    ADD(p, rightReg)
+    jumpIfNeedToChangeSign = FutureJNEG(p) # mnozymy przez ujemne
+    jumpEndingAll = FutureJZERO(p) # jesli mnozymy przez zero
+    skipAbovePart = FutureJUMP(p)
+
+    # jesli tak to odwracamy leftReg
+    jumpIfNeedToChangeSign.finish(p.getCounter())
+    SWAP(p, rightReg) # zwracamy pozyczona wartosc rightReg
+    RESET(p, REG.A) # REG.A = 0
+    SUB(p, leftReg) # REG.A = - leftReg
+    SWAP(p, leftReg) # leftReg = REG.A = -leftReg
+
+    RESET(p, REG.A)
+    SUB(p, rightReg)
+    SWAP(p, rightReg) # odwracamy "zasob"
+
+    # jesli nie to skip
+    skipAbovePart.finish(p.getCounter())
+
+    #
+    # Pierwsze przejscie (manualne) (zeby dest nie bylo 0)
+    #
+    SWAP(p, destReg)
+    ADD(p, leftReg)
+    SWAP(p, destReg)
+    DEC(p, rightReg)
+    
+    # Do tego momentu wyglada git
+
+    #
+    # Glowna Petla
+    #
+    mainLoopId = p.getCounter()
+    RESET(p, REG.A)
+    ADD(p, rightReg) # kopiujemy wartosc z rightReg
+    jumpEndingAll1 = FutureJZERO(p) # osiagnelismy zero czas to skonczyc
+
+    # dodajemy raz
+    SWAP(p, destReg)
+    ADD(p, leftReg) # dodajemy raz
+    SWAP(p, destReg)
+    DEC(p, rightReg) # i dekrementujemy "zasob"
+    FutureJUMP(p).finish(mainLoopId) # wracamy do glownej petli
+
+    #
+    # Koniec mnozenia
+    # ze wzgledu na:
+    #
+    jumpEndingAll.finish(p.getCounter()) #Mnozymy przez zero
+    jumpEndingAll1.finish(p.getCounter()) #Po wykonaniu x mnozen mamy zero //wyczerpanie zasobu rightReg
+
+    # PRINT_ALL_REG(p)
+    
+# times helper
+def BIGGER_TO_LEFT_SMALLER_TO_RIGHT(p, leftValue, rightValue, destReg, leftReg, rightReg):
+    leftValue.evalToRegInstr(p, leftReg)
+    rightValue.evalToRegInstr(p, rightReg)
+
+    ### ensuring leftReg is bigger one
+    RESET(p, REG.A)
+    ADD(p, leftReg) # A << leftReg
+
+    SUB(p, rightReg) # A << A - rightReg
+    ### jesli A ujemne to rightReg wiekszy i trzeba zmienic
+    jumpifNeg = FutureJNEG(p)
+    jumpEnd = FutureJUMP(p)
+
+    # odwracamy bo A ujemne
+    jumpifNeg.finish(p.getCounter())
+
+    SWAP(p, leftReg) # A <- leftreg
+    SWAP(p, rightReg) # A <- rightReg && rightReg <- A
+    SWAP(p, leftReg) # leftReg <- A
+
+    # koniec swapa
+    jumpEnd.finish(p.getCounter())
+
+
+def DIV(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, helpReg=REG.F):
+    if destReg == leftReg or leftReg==rightReg or rightReg==destReg or helpReg==destReg or helpReg==leftReg or helpReg==rightReg:
+        raise Exception("Cannot use same registers")
+    
+    leftValue.evalToRegInstr(p, leftReg)
+    rightValue.evalToRegInstr(p, rightReg)
+
+    RESET(p, destReg)
+
+    RESET(p, helpReg)
+    DEC(p, helpReg) # ustawianie helpera na -1 (do helpera jest dodawane 1 za ujemna kazda wartosc (maks 2) <-1,1>)
+
+    #Sprawdzamy czy dzielna jest ujemna lub jest rowna zero
+    RESET(p, REG.A)
+    ADD(p, leftReg)
+    dzielnaUjemna = FutureJNEG(p)
+    dzielnaDodatnia = FutureJPOS(p)
+    dzielnaZero = FutureJUMP(p)
+
+    dzielnaUjemna.finish(p.getCounter())
+    INC(p, helpReg) # dzielna ujemna
+    SUB(p, leftReg)
+    SUB(p, leftReg) # ustawiamy na +
+    SWAP(p, leftReg)
+    dzielnaDodatnia.finish(p.getCounter())
+
+    #Sprawdzamy czy dzielnik jest ujemna lub jest rowna zero
+    RESET(p, REG.A)
+    ADD(p, rightReg)
+    dzielnikUjemny = FutureJNEG(p)
+    dzielnikDodatni = FutureJPOS(p)
+    dzielnikZero = FutureJUMP(p)
+
+    dzielnikUjemny.finish(p.getCounter())
+    INC(p, helpReg) # dzielna ujemna
+    SUB(p, rightReg)
+    SUB(p, rightReg) # ustawiamy na +
+    SWAP(p, rightReg)
+    dzielnikDodatni.finish(p.getCounter())
+
+    # PRINT_ALL_REG(p)
+    #
+    # Iteracyjnie dzielimy
+    #
+    SWAP(p, leftReg)
+
+    mainLoopId = p.getCounter()
+    jumpMainLoopEnd = FutureJZERO(p)
+    jumpMainLoopEnd2 = FutureJNEG(p)
+    SUB(p, rightReg)
+    INC(p, destReg)
+    FutureJUMP(p).finish(mainLoopId)
+
+
+
+    jumpMainLoopEnd2.finish(p.getCounter())
+    DEC(p, destReg) #przekroczylismy
+    # PUT(p) # wypluwa modulo != 0
+    #
+    # koniec
+    #
+    jumpMainLoopEnd.finish(p.getCounter())
+    dzielnaZero.finish(p.getCounter())
+    dzielnikZero.finish(p.getCounter())
+
+
+    # Jesli w helpReg jest 0 to trzeba zmienic znak
+    SWAP(p, helpReg)
+    changeSignJump = FutureJZERO(p)
+    trueEnd = FutureJUMP(p)
+
+    changeSignJump.finish(p.getCounter())
+    RESET(p, REG.A)
+    SUB(p, destReg)
+    SWAP(p, destReg)
+
+    trueEnd.finish(p.getCounter())
+
+def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, helpReg=REG.F):
+    if destReg == leftReg or leftReg==rightReg or rightReg==destReg or helpReg==destReg or helpReg==leftReg or helpReg==rightReg:
+        raise Exception("Cannot use same registers")
+    
+    leftValue.evalToRegInstr(p, leftReg)
+    rightValue.evalToRegInstr(p, rightReg)
+
+    RESET(p, destReg)
+
+    RESET(p, helpReg)
+    DEC(p, helpReg) # ustawianie helpera na -1 (do helpera jest dodawane 1 za ujemna kazda wartosc (maks 2) <-0,1>)
+
+    #Sprawdzamy czy dzielna jest ujemna lub jest rowna zero
+    RESET(p, REG.A)
+    ADD(p, leftReg)
+    dzielnaUjemna = FutureJNEG(p)
+    dzielnaDodatnia = FutureJPOS(p)
+    dzielnaZero = FutureJUMP(p)
+
+    dzielnaUjemna.finish(p.getCounter())
+    # INC(p, helpReg) # dzielna ujemna w modulo nie zmienia to wyniku koncowego
+    SUB(p, leftReg)
+    SUB(p, leftReg) # ustawiamy na +
+    SWAP(p, leftReg)
+    dzielnaDodatnia.finish(p.getCounter())
+
+    #Sprawdzamy czy dzielnik jest ujemna lub jest rowna zero
+    RESET(p, REG.A)
+    ADD(p, rightReg)
+    dzielnikUjemny = FutureJNEG(p)
+    dzielnikDodatni = FutureJPOS(p)
+    dzielnikZero = FutureJUMP(p)
+
+    dzielnikUjemny.finish(p.getCounter())
+    INC(p, helpReg) # dzielna ujemna
+    SUB(p, rightReg)
+    SUB(p, rightReg) # ustawiamy na +
+    SWAP(p, rightReg)
+    dzielnikDodatni.finish(p.getCounter())
+
+    # PRINT_ALL_REG(p)
+    #
+    # Iteracyjnie dzielimy
+    #
+    SWAP(p, leftReg)
+
+    mainLoopId = p.getCounter()
+    jumpMainLoopEnd = FutureJZERO(p)
+    jumpMainLoopEnd2 = FutureJNEG(p)
+    SUB(p, rightReg)
+    FutureJUMP(p).finish(mainLoopId)
+
+
+
+    jumpMainLoopEnd2.finish(p.getCounter())
+    jumpMainLoopEnd.finish(p.getCounter())
+    dzielnaZero.finish(p.getCounter())
+    dzielnikZero.finish(p.getCounter())
+
+    SWAP(p, destReg) #wynik modulo (ujemny) do koncowego rejestru
+    RESET(p, REG.A) #dla sportu
+    SWAP(p, helpReg) #jesli 0 to dzielnik ujemny wiec zostawiamy wynik
+    trueEnd = FutureJZERO(p)
+    
+    # # Jesli nie to odwracamy znak
+    RESET(p, REG.A)
+    SUB(p, destReg)
+    SWAP(p, destReg)
+
+    trueEnd.finish(p.getCounter())
 
 ###############
-### WARUNKI ###
+### IF_THEN ###
 ###############
 
 # DZIALA zmienne + number
@@ -247,7 +477,7 @@ def CONDITION_LEQ(p, leftVal, rightVal):
 # Ustawia podana wartosc w REG.A i podstawia pod REG.X
 def setValueOfRegister(p, regX, val):
     RESET(p, REG.A)
-    # print(f"KRUWA {val}")
+    
     binVal = bin(val)[2:]   # na binarny
     length = len(binVal)
     
@@ -256,8 +486,15 @@ def setValueOfRegister(p, regX, val):
             INC(p, REG.A)
         if i < length - 1:
             SHIFT(p, REG.H) #shiftujemy o 2^reg.H (gdzie reg.H = 1 CONSTANT)
-
-    SWAP(p, regX)
+    
+    if(val < 0):
+        SWAP(p, regX)
+        RESET(p, REG.A)
+        SUB(p, regX)
+        SWAP(p, regX)
+        RESET(p, REG.A)
+    else:
+        SWAP(p, regX)
 
 
 # Uzywa A i wybrany rejestr / laduje do reg wartosc zmiennej
@@ -316,3 +553,8 @@ def PRINT_ALL_REG(p):
     SWAP(p, REG.H)
     PUT(p)
     SWAP(p, REG.H)
+
+def PRINT_REG(p, regX):
+    SWAP(p, regX)
+    PUT()
+    SWAP(p, regX)

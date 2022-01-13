@@ -45,8 +45,8 @@ class BinaryOperator(Expression):
         elif self.operator == 'TIMES':
             return instructions.TIMES(p, self.left, self.right, reg)
         elif self.operator == 'DIV':
-            return instructions.DIVIDE(p, self.left, self.right, reg)
+            return instructions.DIV(p, self.left, self.right, reg)
         elif self.operator == 'MOD':
-            return instructions.MODULO(p, self.left, self.right, reg)
+            return instructions.MOD(p, self.left, self.right, reg)
         else:
             raise Exception("Operator '%s' not defined" % self.operator)
