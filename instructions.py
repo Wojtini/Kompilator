@@ -486,7 +486,7 @@ def DIV(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     INC(p, REG.H) 
     INC(p, REG.H) # naprawianie shifta
 
-def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, helpReg=REG.F):
+def MOD_WORSE(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, helpReg=REG.F):
     if destReg == leftReg or leftReg==rightReg or rightReg==destReg or helpReg==destReg or helpReg==leftReg or helpReg==rightReg:
         raise Exception("Cannot use same registers")
     
@@ -556,6 +556,135 @@ def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     SWAP(p, destReg)
 
     trueEnd.finish(p.getCounter())
+
+def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, helpReg=REG.F, liczReg=REG.G):
+    if destReg == leftReg or leftReg==rightReg or rightReg==destReg or helpReg==destReg or helpReg==leftReg or helpReg==rightReg:
+        raise Exception("Cannot use same registers")
+    
+    leftValue.evalToRegInstr(p, leftReg)
+    rightValue.evalToRegInstr(p, rightReg)
+
+    RESET(p, destReg)
+
+    RESET(p, helpReg)
+    DEC(p, helpReg) # ustawianie helpera na -1 (do helpera jest dodawane 1 za ujemna kazda wartosc (maks 2) <-0,1>)
+
+    #Sprawdzamy czy dzielna jest ujemna lub jest rowna zero
+    RESET(p, REG.A)
+    ADD(p, leftReg)
+    dzielnaUjemna = FutureJNEG(p)
+    dzielnaDodatnia = FutureJPOS(p)
+    dzielnaZero = FutureJUMP(p)
+
+    dzielnaUjemna.finish(p.getCounter())
+    # INC(p, helpReg) # dzielna ujemna w modulo nie zmienia to wyniku koncowego
+    SUB(p, leftReg)
+    SUB(p, leftReg) # ustawiamy na +
+    SWAP(p, leftReg)
+    dzielnaDodatnia.finish(p.getCounter())
+
+    #Sprawdzamy czy dzielnik jest ujemna lub jest rowna zero
+    RESET(p, REG.A)
+    ADD(p, rightReg)
+    dzielnikUjemny = FutureJNEG(p)
+    dzielnikDodatni = FutureJPOS(p)
+    dzielnikZero = FutureJUMP(p)
+
+    dzielnikUjemny.finish(p.getCounter())
+    INC(p, helpReg) # dzielna ujemna
+    SUB(p, rightReg)
+    SUB(p, rightReg) # ustawiamy na +
+    SWAP(p, rightReg)
+    dzielnikDodatni.finish(p.getCounter())
+
+    #
+    # Dzielimy (Pierwsza iteracja do gory)
+    #
+    RESET(p, liczReg)
+    INC(p, liczReg) # przygotowanie licznika
+
+    firstIterationLoopId = p.getCounter()
+
+    RESET(p, REG.A)
+    ADD(p, leftReg)
+    SUB(p, rightReg) # roznica leftReg - rightReg * x
+
+    SWAP(p, rightReg)
+    SHIFT(p, REG.H) # zwiekszanie dzielnika x2
+    SWAP(p, rightReg)
+
+    SWAP(p, liczReg)
+    SHIFT(p, REG.H) # zwiekszanie licznika x2
+    SWAP(p, liczReg) 
+
+    limitReached = FutureJNEG(p)
+    FutureJUMP(p).finish(firstIterationLoopId)
+    limitReached.finish(p.getCounter())
+    # Git wrzuca do 1. wieksza potege 2 (o 2 ale to nie powinien byc problem)
+
+    #
+    # Glowna petla
+    # jesli leftReg - rightReg > 0:
+    # to robimy ten tego, jesli nie to zmiejszamy
+    #
+    DEC(p, REG.H) 
+    DEC(p, REG.H) # przygotowanie do shifta
+    MainLoopId = p.getCounter()
+
+    SWAP(p, rightReg)
+    SHIFT(p, REG.H)
+    SWAP(p, rightReg)
+
+    SWAP(p, liczReg)
+    SHIFT(p, REG.H)
+    
+    # # sprawdzamy czy licznik sie nie wyzerowal
+    liczWyzerowanyJZERO = FutureJZERO(p)
+    SWAP(p, liczReg)
+
+
+    RESET(p, REG.A)
+    ADD(p, leftReg)
+    SUB(p, rightReg)
+
+    # # jesli REG.A < 0 to leftReg < rightReg i powtarzamy mainLoopa 
+    FutureJNEG(p).finish(MainLoopId)
+    # # jesli REG.A >= 0 to mozemy zwiekszyc wynik i odjac od dzielnej rightReg
+    SWAP(p, destReg)
+    ADD(p, liczReg)
+    SWAP(p, destReg)
+
+    SWAP(p, leftReg)
+    SUB(p, rightReg)
+    SWAP(p, leftReg)
+
+    FutureJUMP(p).finish(MainLoopId)# i wracamy do petli
+
+
+    liczWyzerowanyJZERO.finish(p.getCounter())
+
+    SWAP(p, leftReg)
+    SWAP(p, destReg)
+    #
+    # ZMIANA ZNAKU NA POPRAWNY
+    # Jesli w helpReg jest 0 to trzeba zmienic znak
+    SWAP(p, helpReg)
+    changeSignJump = FutureJZERO(p)
+    trueEnd = FutureJUMP(p)
+
+    changeSignJump.finish(p.getCounter())
+    RESET(p, REG.A)
+    SUB(p, destReg)
+    SWAP(p, destReg)
+    # DEC(p, destReg)
+
+    trueEnd.finish(p.getCounter())
+    dzielnaZero.finish(p.getCounter())
+    dzielnikZero.finish(p.getCounter())
+
+
+    INC(p, REG.H) 
+    INC(p, REG.H) # naprawianie shifta
 
 ###############
 ### IF_THEN ###
