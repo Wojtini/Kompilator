@@ -486,6 +486,7 @@ def DIV(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     INC(p, REG.H) 
     INC(p, REG.H) # naprawianie shifta
 
+#NIE DZIALA
 def MOD_WORSE(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, helpReg=REG.F):
     if destReg == leftReg or leftReg==rightReg or rightReg==destReg or helpReg==destReg or helpReg==leftReg or helpReg==rightReg:
         raise Exception("Cannot use same registers")
@@ -567,8 +568,7 @@ def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     RESET(p, destReg)
 
     RESET(p, helpReg)
-    DEC(p, helpReg) # ustawianie helpera na -1 (do helpera jest dodawane 1 za ujemna kazda wartosc (maks 2) <-0,1>)
-
+   
     #Sprawdzamy czy dzielna jest ujemna lub jest rowna zero
     RESET(p, REG.A)
     ADD(p, leftReg)
@@ -577,7 +577,7 @@ def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     dzielnaZero = FutureJUMP(p)
 
     dzielnaUjemna.finish(p.getCounter())
-    # INC(p, helpReg) # dzielna ujemna w modulo nie zmienia to wyniku koncowego
+    INC(p, helpReg) # ustawianie na +1
     SUB(p, leftReg)
     SUB(p, leftReg) # ustawiamy na +
     SWAP(p, leftReg)
@@ -591,7 +591,8 @@ def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     dzielnikZero = FutureJUMP(p)
 
     dzielnikUjemny.finish(p.getCounter())
-    INC(p, helpReg) # dzielna ujemna
+    INC(p, helpReg) # 
+    INC(p, helpReg) # dzielna ujemna +2
     SUB(p, rightReg)
     SUB(p, rightReg) # ustawiamy na +
     SWAP(p, rightReg)
@@ -631,17 +632,16 @@ def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     DEC(p, REG.H) # przygotowanie do shifta
     MainLoopId = p.getCounter()
 
-    SWAP(p, rightReg)
-    SHIFT(p, REG.H)
-    SWAP(p, rightReg)
 
     SWAP(p, liczReg)
     SHIFT(p, REG.H)
-    
     # # sprawdzamy czy licznik sie nie wyzerowal
     liczWyzerowanyJZERO = FutureJZERO(p)
     SWAP(p, liczReg)
 
+    SWAP(p, rightReg)
+    SHIFT(p, REG.H)
+    SWAP(p, rightReg)
 
     RESET(p, REG.A)
     ADD(p, leftReg)
@@ -667,21 +667,56 @@ def MOD(p, leftValue, rightValue, destReg=REG.B, leftReg=REG.D, rightReg=REG.E, 
     SWAP(p, destReg)
     #
     # ZMIANA ZNAKU NA POPRAWNY
-    # Jesli w helpReg jest 0 to trzeba zmienic znak
+    # Jesli w helpReg jest 
+    #       0 oba byly dodatnie
+    #       1 to tylko dzielna jest minusowa
+    #       2 to tylko dzielnik jest minusowy
+    #       3 oba minusowe
+    #
     SWAP(p, helpReg)
-    changeSignJump = FutureJZERO(p)
-    trueEnd = FutureJUMP(p)
+    trueEnd = FutureJZERO(p) # oba dodanie nq
+    DEC(p, REG.A)
+    dzielnaUjemna = FutureJZERO(p) # dzielna ujemna
+    DEC(p, REG.A)
+    dzielnikUjemny = FutureJZERO(p)
+    DEC(p, REG.A)
+    wszystkoUjemne = FutureJZERO(p)
+    #tutaj juz nie dojdzie (przynajmniej nie powinien)
 
-    changeSignJump.finish(p.getCounter())
+
+    dzielnaUjemna.finish(p.getCounter())
+    SWAP(p, destReg)
+    SUB(p, rightReg)
+    SWAP(p, destReg)
     RESET(p, REG.A)
     SUB(p, destReg)
     SWAP(p, destReg)
-    # DEC(p, destReg)
+    trueEnd1 = FutureJUMP(p)
+
+    dzielnikUjemny.finish(p.getCounter())
+    SWAP(p, destReg)
+    SUB(p, rightReg)
+    SWAP(p, destReg)
+    trueEnd2 = FutureJUMP(p)
+
+    wszystkoUjemne.finish(p.getCounter())
+    RESET(p, REG.A)
+    SUB(p, destReg)
+    SWAP(p, destReg)
+    trueEnd3 = FutureJUMP(p)
+
+
+
+
+
+    
 
     trueEnd.finish(p.getCounter())
     dzielnaZero.finish(p.getCounter())
     dzielnikZero.finish(p.getCounter())
-
+    trueEnd1.finish(p.getCounter())
+    trueEnd2.finish(p.getCounter())
+    trueEnd3.finish(p.getCounter())
 
     INC(p, REG.H) 
     INC(p, REG.H) # naprawianie shifta
@@ -872,6 +907,7 @@ def FOR_FROM_DOWNTO_DO(p, fromValue, downtoValue, iterator, forCommands, toItera
     FutureJUMP(p).finish(forStartId)
 
     endLoop.finish(p.getCounter())
+    
 
 ###############
 ### HELPERS ###

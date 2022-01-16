@@ -16,7 +16,7 @@ tokens = (
 )
 
 t_ignore = ' \t'
-t_ignore_COMMENT = '\([A-Za-z0-9\;\[\] \\\n]*\)'
+t_ignore_COMMENT = '\([A-Za-z0-9\;\[\] \t \\\n\-\.\+\-\*\/\=\>\<\?\^\%\,\ł]*\)'
 
 t_VAR = r'VAR'
 t_BEGIN = r'BEGIN'
@@ -46,7 +46,6 @@ t_ENDIF = r'ENDIF'
 t_WHILE = r'WHILE'
 t_DO = r'DO'
 t_ENDWHILE = r'ENDWHILE' 
-
 t_ASSIGN = r'ASSIGN'
 
 t_FOR = r'FOR'

@@ -17,6 +17,9 @@ class DeclarationVar:
         self.initialized = True
         MemoryManager.assignMem(self)
 
+    def unregister(self):
+        MemoryManager.unregister(self)
+
     def __repr__(self):
         return str((self.pidentifier, self.memoryId, self.length, f"IsArray: {self.isArray()}, MemID: {self.memoryId}, initialized: {self.initialized}"))
 

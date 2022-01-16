@@ -89,8 +89,11 @@ class CommandForFromToDo(Command):
         declaredIteratorTo.register()
 
         iteratorIdentifier = Identifier(self.pid)
-        declaredIteratorTo = Identifier(self.pid + "to2")
-        instructions.FOR_FROM_TO_DO(p, self.fromValue, self.toValue, iteratorIdentifier, self.commands, declaredIteratorTo)
+        IteratorToIdentifier = Identifier(self.pid + "to2")
+        instructions.FOR_FROM_TO_DO(p, self.fromValue, self.toValue, iteratorIdentifier, self.commands, IteratorToIdentifier)
+
+        declaredIterator.unregister()
+        declaredIteratorTo.unregister()
 
 class CommandForFromDowntoDo(Command):
     def __init__(self, line_number, pid, fromValue, toValue, commands):
@@ -117,8 +120,11 @@ class CommandForFromDowntoDo(Command):
 
 
         iteratorIdentifier = Identifier(self.pid)
-        declaredIteratorTo = Identifier(self.pid + "to2")
-        instructions.FOR_FROM_DOWNTO_DO(p, self.fromValue, self.toValue, iteratorIdentifier, self.commands, declaredIteratorTo)
+        IteratorToIdentifier = Identifier(self.pid + "to2")
+        instructions.FOR_FROM_DOWNTO_DO(p, self.fromValue, self.toValue, iteratorIdentifier, self.commands, IteratorToIdentifier)
+
+        declaredIterator.unregister()
+        declaredIteratorTo.unregister()
 
 
 class CommandRead(Command):

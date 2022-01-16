@@ -20,7 +20,6 @@ class Program:
         #Kompilacja
         self.translateCommands()
 
-        print(self.commandsToText())
 
     def makeInstr(self, instrStr):
         self.incCounter()

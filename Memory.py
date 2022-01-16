@@ -16,12 +16,12 @@ class MemoryManager:
                 raise Exception("Duplicate declaration for '%s' at line %i" % (pidentifier, decl.lineNumber))
             self.declaredPidentifiers.add(pidentifier)
     
-    # def unregister(self, declaration):
-    #     try:
-    #         del self.memmap[declaration.pidentifier]
-    #         declaration.memoryId = None
-    #     except KeyError as key:
-    #         raise Exception("Trying to unregister not declared identifier %s" % key)
+    def unregister(self, declaration):
+        try:
+            del self.memmap[declaration.pidentifier]
+            declaration.memoryId = None
+        except KeyError as key:
+            raise Exception("Trying to unregister not declared identifier %s" % key)
 
     def assignMemToVariables(self):
         for declaration in self.declarations:
@@ -31,7 +31,7 @@ class MemoryManager:
         pidentifier = declaration.pidentifier
 
         if pidentifier in self.memmap and self.memmap[pidentifier].memoryId != None:
-            raise Exception("Duplicate memory allocation")
+            raise Exception(f"Duplicate memory allocation for {declaration}")
 
         blockLength = 1
         if declaration.isArray():
