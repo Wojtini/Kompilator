@@ -11,7 +11,11 @@ class DeclarationVar:
         self.initialized = False
 
     def isArray(self):
-        return self.isarr == True
+        return self.isarr
+
+    def register(self):
+        self.initialized = True
+        MemoryManager.assignMem(self)
 
     def __repr__(self):
         return str((self.pidentifier, self.memoryId, self.length, f"IsArray: {self.isArray()}, MemID: {self.memoryId}, initialized: {self.initialized}"))

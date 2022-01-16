@@ -1,12 +1,14 @@
 import instructions
-
+from misc.expression import ValueFromIdentifier
+from misc.declarations import DeclarationVar
+from misc.identifier import Identifier
 class Command:
     def __init__(self, line_number):
         self.line_number = line_number
         pass
 
     def generateCode(self, program):
-        print(f"Generate Code not defined for {self.__class__}")
+        raise Exception(f"Generate Code not defined for {self.__class__}")
 
 class CommandAssign(Command):
     def __init__(self, identifier, expression, line_number):
@@ -21,8 +23,6 @@ class CommandAssign(Command):
             return instructions.ASSIGN(p, self.identifier, self.expression)
         except Exception as err:
             raise Exception('someting wong')
-            # raise Exception(str(err) + " at line %i" % self.line_number)
-
 
 class CommandIfThenElse(Command):
     def __init__(self, line_number, condition, thenCommands, elseCommands):
@@ -65,14 +65,60 @@ class CommandRepeatUntil(Command):
 
 
 class CommandForFromToDo(Command):
-    def __init__(self, line_number):
+    def __init__(self, line_number, pid, fromValue, toValue, commands):
         super().__init__(line_number=line_number)
+        self.pid = pid
+        self.fromValue = fromValue
+        self.toValue = toValue
+        self.commands = commands
+        if isinstance(self.toValue, ValueFromIdentifier):
+            if self.toValue.identifier.pidentifier == self.pid:
+                raise Exception("Using iterator '%s' as TO range in FOR loop at line %i" % (self.pidentifier, self.lineNumber))
+        if isinstance(self.fromValue, ValueFromIdentifier):
+            if self.fromValue.identifier.pidentifier == self.pid:
+                raise Exception("Using iterator '%s' as FROM range in FOR loop at line %i" % (self.pidentifier, self.lineNumber))
         pass
 
+    def generateCode(self, p):
+        declaredIterator = DeclarationVar(self.pid, islocal=True)
+        declaredIterator.register()
+
+
+        #aby przechowac wartosc to
+        declaredIteratorTo = DeclarationVar(self.pid + "to2", islocal=True)
+        declaredIteratorTo.register()
+
+        iteratorIdentifier = Identifier(self.pid)
+        declaredIteratorTo = Identifier(self.pid + "to2")
+        instructions.FOR_FROM_TO_DO(p, self.fromValue, self.toValue, iteratorIdentifier, self.commands, declaredIteratorTo)
+
 class CommandForFromDowntoDo(Command):
-    def __init__(self, line_number):
+    def __init__(self, line_number, pid, fromValue, toValue, commands):
         super().__init__(line_number=line_number)
+        self.pid = pid
+        self.fromValue = fromValue
+        self.toValue = toValue
+        self.commands = commands
+        if isinstance(self.toValue, ValueFromIdentifier):
+            if self.toValue.identifier.pidentifier == self.pid:
+                raise Exception("Using iterator '%s' as TO range in FOR loop at line %i" % (self.pidentifier, self.lineNumber))
+        if isinstance(self.fromValue, ValueFromIdentifier):
+            if self.fromValue.identifier.pidentifier == self.pid:
+                raise Exception("Using iterator '%s' as FROM range in FOR loop at line %i" % (self.pidentifier, self.lineNumber))
         pass
+
+    def generateCode(self, p):
+        declaredIterator = DeclarationVar(self.pid, islocal=True)
+        declaredIterator.register()
+
+        #aby przechowac wartosc to
+        declaredIteratorTo = DeclarationVar(self.pid + "to2", islocal=True)
+        declaredIteratorTo.register()
+
+
+        iteratorIdentifier = Identifier(self.pid)
+        declaredIteratorTo = Identifier(self.pid + "to2")
+        instructions.FOR_FROM_DOWNTO_DO(p, self.fromValue, self.toValue, iteratorIdentifier, self.commands, declaredIteratorTo)
 
 
 class CommandRead(Command):

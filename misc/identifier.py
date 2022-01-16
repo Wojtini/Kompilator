@@ -19,9 +19,6 @@ class ArrayAccess(Identifier):
         super(ArrayAccess, self).__init__(pidentifier)
         self.index = index
 
-    def evalArrayOffsetToReg(self, p, reg):
-        raise Exception("Not defined")
-
     def memAddressToReg(self, p, reg1, reg2):
         raise Exception("Not defined")
 

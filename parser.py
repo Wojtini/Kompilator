@@ -24,7 +24,7 @@ def p_program_var(p):
 def p_program(p):
     '''program : BEGIN commands END'''
     commands = p[2]
-    p[0] = Program(commands)
+    p[0] = Program([], commands)
 
 ##################
 ### DEKLARACJE ###
@@ -123,10 +123,10 @@ def p_command_repeatuntil(p):
     p[0] = commands.CommandRepeatUntil(p.lineno(1), p[2], p[4])
 def p_command_forfromtodo(p):
     'command : FOR PIDENTIFIER FROM value TO value DO commands ENDFOR'
-    p[0] = commands.CommandForFromToDo(p.lineno(1))
+    p[0] = commands.CommandForFromToDo(p.lineno(1), p[2], p[4], p[6], p[8])
 def p_command_forfromdowntodo(p):
     'command : FOR PIDENTIFIER FROM value DOWNTO value DO commands ENDFOR'
-    p[0] = commands.CommandForFromDowntoDo(p.lineno(1))
+    p[0] = commands.CommandForFromDowntoDo(p.lineno(1), p[2], p[4], p[6], p[8])
 def p_command_read(p):
     'command : READ identifier SEMICOLON'
     p[0] = commands.CommandRead(p.lineno(1), p[2])

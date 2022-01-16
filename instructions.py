@@ -1,6 +1,7 @@
 from register import REG
 from misc.identifier import ArrayAccess
 from misc.jumps import *
+from misc.expression import ValueFromIdentifier
 # pobrana liczbe zapisuje w rejestrze r_a oraz k <- k + 1
 def GET(p):
     p.makeInstr('GET')
@@ -67,9 +68,9 @@ def WRITE(p, val):
     PUT(p)
     # PRINT_ALL_REG(p) 
 # DZIALA
-def ASSIGN(p, identifier, expression):
+def ASSIGN(p, identifier, expression, localProtect = True):
     decl = identifier.declaration
-    if decl.islocal:
+    if decl.islocal and localProtect:
         raise Exception("Trying to modify local variable '%s'" % decl.pidentifier)
     if not isinstance(identifier, ArrayAccess) and decl.isarr == True:
         raise Exception("'%s' is an array, but used as normal variable" % decl.pidentifier)
@@ -827,6 +828,50 @@ def REPEAT_UNTIL(p, untilCommands, cond):
         command.generateCode(p)
     cond.negate()
     WHILE(p, cond, untilCommands)
+
+def FOR_FROM_TO_DO(p, fromValue, toValue, iterator, forCommands, toIterator):
+    iteratorIdentifier = ValueFromIdentifier(iterator)
+    toIteratorIdentifier = ValueFromIdentifier(toIterator)
+    ASSIGN(p, iterator, fromValue, False) # poczatkowa wartosc
+    ASSIGN(p, toIterator, toValue, False) # poczatkowa wartosc
+
+    forStartId = p.getCounter()
+    CONDITION_GE(p, iteratorIdentifier, toIteratorIdentifier)
+    endLoop = FutureJZERO(p)
+
+    for command in forCommands:
+        command.generateCode(p)
+    
+    iterator.memAddressToReg(p, REG.B, REG.C)
+    LOAD(p, REG.B)
+    INC(p, REG.A)
+    STORE(p, REG.B)
+
+    FutureJUMP(p).finish(forStartId)
+
+    endLoop.finish(p.getCounter())
+    
+def FOR_FROM_DOWNTO_DO(p, fromValue, downtoValue, iterator, forCommands, toIterator):
+    iteratorIdentifier = ValueFromIdentifier(iterator)
+    toIteratorIdentifier = ValueFromIdentifier(toIterator)
+    ASSIGN(p, iterator, fromValue, False) # poczatkowa wartosc
+    ASSIGN(p, toIterator, downtoValue, False) # poczatkowa wartosc
+
+    forStartId = p.getCounter()
+    CONDITION_LE(p, iteratorIdentifier, toIteratorIdentifier)
+    endLoop = FutureJZERO(p)
+
+    for command in forCommands:
+        command.generateCode(p)
+    
+    iterator.memAddressToReg(p, REG.B, REG.C)
+    LOAD(p, REG.B)
+    DEC(p, REG.A)
+    STORE(p, REG.B)
+
+    FutureJUMP(p).finish(forStartId)
+
+    endLoop.finish(p.getCounter())
 
 ###############
 ### HELPERS ###
