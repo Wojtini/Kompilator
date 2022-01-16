@@ -115,10 +115,12 @@ def p_command_ifthen(p):
     p[0] = commands.CommandIfThen(p.lineno(1),cond,thenCommands)
 def p_command_whiledo(p):
     'command : WHILE condition DO commands ENDWHILE'
-    p[0] = commands.CommandWhileDo(p.lineno(1))
+    cond = p[2]
+    whileCommands = p[4]
+    p[0] = commands.CommandWhileDo(p.lineno(1), cond, whileCommands)
 def p_command_repeatuntil(p):
     'command : REPEAT commands UNTIL condition SEMICOLON'
-    p[0] = commands.CommandRepeatUntil(p.lineno(1))
+    p[0] = commands.CommandRepeatUntil(p.lineno(1), p[2], p[4])
 def p_command_forfromtodo(p):
     'command : FOR PIDENTIFIER FROM value TO value DO commands ENDFOR'
     p[0] = commands.CommandForFromToDo(p.lineno(1))

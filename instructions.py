@@ -88,7 +88,6 @@ def ASSIGN(p, identifier, expression):
 ### ARYTMETYKA ###
 ##################
 
-    TIMES
 # DZIALA
 def PLUS(p, leftValue, rightValue, destReg=REG.B, helpReg=REG.D):
     if destReg == helpReg:
@@ -804,6 +803,30 @@ def CONDITION_LE(p, leftVal, rightVal):
 
 def CONDITION_LEQ(p, leftVal, rightVal):
     CONDITION_GEQ(p, rightVal, leftVal)
+
+#############
+### LOOPS ###
+#############
+
+# chyba dziala
+def WHILE(p, cond, whileCommands):
+    startWhileId = p.getCounter()
+    cond.generateCode(p) # 0 w A = True
+    trueJZERO = FutureJZERO(p)
+    falseJUMP = FutureJUMP(p)
+    trueJZERO.finish(p.getCounter())
+
+    for command in whileCommands:
+        command.generateCode(p)
+    FutureJUMP(p).finish(startWhileId)
+
+    falseJUMP.finish(p.getCounter())
+
+def REPEAT_UNTIL(p, untilCommands, cond):
+    for command in untilCommands:
+        command.generateCode(p)
+    cond.negate()
+    WHILE(p, cond, untilCommands)
 
 ###############
 ### HELPERS ###

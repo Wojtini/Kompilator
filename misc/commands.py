@@ -44,14 +44,25 @@ class CommandIfThen(Command):
         instructions.IF_THEN(p, self.condition, self.thenCommands)
 
 class CommandWhileDo(Command):
-    def __init__(self, line_number):
+    def __init__(self, line_number, condition, whileCommands):
         super().__init__(line_number=line_number)
+        self.condition = condition
+        self.whileCommands = whileCommands
         pass
 
+    def generateCode(self, p):
+        instructions.WHILE(p, self.condition, self.whileCommands)
+
 class CommandRepeatUntil(Command):
-    def __init__(self, line_number):
+    def __init__(self, line_number, untilCommands, condition):
         super().__init__(line_number=line_number)
+        self.condition = condition
+        self.untilCommands = untilCommands
         pass
+
+    def generateCode(self, p):
+        instructions.REPEAT_UNTIL(p, self.untilCommands, self.condition)
+
 
 class CommandForFromToDo(Command):
     def __init__(self, line_number):

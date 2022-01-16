@@ -10,15 +10,6 @@ class DeclarationVar:
         self.islocal = islocal
         self.initialized = False
 
-    def delete(self):
-        pass
-        # MemoryManager.unregister(self)
-
-    def register(self):
-        self.initialized = True
-        pass
-        # MemoryManager.assignMem(self)
-
     def isArray(self):
         return self.isarr == True
 

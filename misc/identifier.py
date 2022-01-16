@@ -67,13 +67,12 @@ class ArrayAccessByPidentifier(ArrayAccess):
         # print(arrRangeTo)
         # print(declaration)
         # print(self.index)
-        indexIdentifier = Identifier(self.index) # tworzymy nowy identifier 
 
         #   tab[1:5]
         #   value = 3
         #   tab[value]
         
-        instructions.LOAD_IDENTIFIER_VALUE_TO_REGISTER(p, indexIdentifier, reg2)    # reg2 = value / 3
+        instructions.LOAD_IDENTIFIER_VALUE_TO_REGISTER(p, Identifier(self.index) , reg2)    # reg2 = value / 3
 
         instructions.setValueOfRegister(p, reg1, arrRangeFrom)                        # reg1 = arrRangeFrom / 1
 
